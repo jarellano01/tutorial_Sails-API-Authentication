@@ -19,7 +19,7 @@
 
 module.exports.policies = {
 
-  ' * ': ['passport'],
+  '*': ['isAuthorized'],
   'auth': {
     '*': ['passport']
   }

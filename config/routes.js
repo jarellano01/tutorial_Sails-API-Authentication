@@ -32,9 +32,13 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+  '/': {
+    view: 'homepage'
+  },
+  'post /test' : 'AuthController.callback',
   'post /auth/local': 'AuthController.callback',
   'post /auth/local/:action': 'AuthController.callback',
-
+  //'get /test/getUser' : 'TestController.getUser'
   /***************************************************************************
   *                                                                          *
   * Custom routes here...                                                    *

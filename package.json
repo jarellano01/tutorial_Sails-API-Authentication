@@ -20,10 +20,13 @@
     "grunt-sails-linker": "~0.10.1",
     "grunt-sync": "0.5.2",
     "include-all": "^1.0.0",
+    "jsonwebtoken": "^7.2.1",
     "passport": "^0.3.2",
+    "passport-local": "^1.0.0",
     "rc": "1.0.1",
     "sails": "~0.12.9",
     "sails-disk": "~0.10.9",
+    "sails-mongo": "^0.12.2",
     "validator": "^6.2.0"
   },
   "scripts": {
