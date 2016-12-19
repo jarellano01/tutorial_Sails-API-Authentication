@@ -19,6 +19,11 @@ Once again Sails along with Sails-Generate-Auth, will make this very simple
      - AuthController
    - models
    - services
+ - Let's not forget to install the following dependencies
+    - `npm install passport --save`
+    - `npm install bcryptjs --save`
+    - `npm install validator --save`
+
 
 
 ```
@@ -49,7 +54,38 @@ views (Will not be used)
         - register.ejs
 ```
 
-At this point our we have the basic structure for authentication but we still do not have a functional application
+At this point our we have the basic structure for authentication but we still do not have a functional application. We will be customizing quite a bit in the next few steps. Here are a few items to keep in mind:
+
+- A User and Passport model was generated. All user passwords will be stored in the Passport model and will be tied to a specific user.
+- At this point no database has been set up for storing any of our models. In this tutorial we will be using MongoDb but SailsJs has built in functionality to use MySQL and PostgreSQL.
+- We will set up routes to handle Registration and Login using the newly created auth controller
+- For now we will be setting up Passport Local only.
+- We will not be using sessionAuth for this API as we have no front end views that we will be implementing
+
+## 2. Load Passport, Setup Routes, and Add Policies
+- We must Load Passport into our Sails App. To do this, add the following line of code to `config/bootstrap.js`
+```
+sails.services.passport.loadStrategies();
+```
+- We will be using PassportLocal and no views therefore we will only add the following routes into our `config/routes.js` file.
+```
+'post /auth/local': 'AuthController.callback',
+'post /auth/local/:action': 'AuthController.callback',
+```
+- Comment out or remove the existing route which was set up by Sails
+```
+'/': {
+   view: 'homepage'
+ }
+```
+- Policies will be our main point of access for restricting access to specific pages and requiring authentication. Add the following lines of code to `config/policies.js`
+```
+' * ': ['passport'],
+'auth': {
+   '*': ['passport']
+}
+```
+- For educational purposes, we will slowly be adding to this file as needed.
 
 
 
