@@ -22,6 +22,10 @@ module.exports.policies = {
   '*': ['isAuthorized'],
   'auth': {
     '*': ['passport']
+  },
+
+  'TestController': {
+    'unauthenticated': true
   }
   /***************************************************************************
    *                                                                          *

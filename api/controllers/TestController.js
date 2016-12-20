@@ -6,16 +6,13 @@
  */
 
 module.exports = {
-
-
-
-  /**
-   * `TestController.getUser()`
-   */
   getUser: function (req, res) {
-    return res.json({
-      todo: req.user
-    });
+    return res.json(req.user);
+  },
+  unAuthenticated: function (req, res) {
+    return res.send("This controller action does not require authentication")
   }
+
 };
+
 

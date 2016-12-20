@@ -11,7 +11,7 @@ AuthController = {
           return res.json({authenticated: false, user: user, message: message});
         }
 
-        res.json({authenticated: true, user: user, message: message, token: jwToken.issue({user: user})});
+        res.json({authenticated: true, message: message, token: jwToken.issue({user: user})});
       });
     });
   },

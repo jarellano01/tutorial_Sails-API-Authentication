@@ -1,8 +1,8 @@
-# Sails-API
+# Sails-API with Passport and JWT Authentication
 
 This API has been set up for the purpose of demonstrating how to set up a simple API with Authentication. For the purpose of this API, it will be assumed that there is no front end application directly attached to this Repository. Instead all API requests will be done from other applications using JWT for authentication.
 
-After creating various API's for various applications, each time I have been forced to apply authentication a little differently with different work arounds. Slowly I began to figure out a more standard way of applying Authentication to using the power of SailsJs. In this tutorial we will be start completely from scratch allowing us to create a strong and clean baseline when developing any API.
+After creating various API's for various applications, each time I have been forced to apply authentication a little differently with different work arounds. Slowly I began to figure out a more standard way of applying Authentication using the power of SailsJs. In this tutorial we will start completely from scratch allowing us to create a strong and clean baseline for any API requiring Authentication.
 
 ## 1. Initial Setup
 
@@ -177,7 +177,7 @@ password : password
 Notice how we used `identifier`. This allows us to login the user using either an Email or Password.
 
 
-## 5. JWT Authentication
+## 5. JWT Issuing
 At this point we can register and login, but logging in merely just tells us whether a username and password are in the database. This really does nothing at this point in time. We must now add a method of returning a Jason Web Token in the JSON object if a user is authenticated.
 
 1. Add a file called `jwToken.js` under `api/services` with the following code:
@@ -222,7 +222,7 @@ At this point we can register and login, but logging in merely just tells us whe
             return res.json({authenticated: false, user: user, message: message});
           }
 
-          res.json({authenticated: true, user: user, message: message, token: jwToken.issue({user: user})});
+          res.json({authenticated: true, message: message, token: jwToken.issue({user: user})});
         });
       });
     },
@@ -232,4 +232,107 @@ At this point we can register and login, but logging in merely just tells us whe
   module.exports = AuthController;
   ```
 
+## 6. JWT Authentication
+Now that we receive a Jason Web Token when registering and logging in a User, we can use that JWT in an Authorization Header to access other controllers.
 
+1. First let's add a Policy Middleware. In the `api/policies` folder add a new file called `isAuthorized.js` and add the following code
+  ```
+  module.exports = function (req, res, next) {
+    var token;
+
+    if (req.headers && req.headers.authorization) {
+      var parts = req.headers.authorization.split(' ');
+      if (parts.length == 2) {
+        var scheme = parts[0],
+          credentials = parts[1];
+
+        if (/^Bearer$/i.test(scheme)) {
+          token = credentials;
+        }
+      } else {
+        return res.json(401, {err: 'Format is Authorization: Bearer [token]'});
+      }
+    } else if (req.param('token')) {
+      token = req.param('token');
+      // We delete the token from param to not mess with blueprints
+      delete req.query.token;
+    } else {
+      return res.json(401, {err: 'No Authorization header was found'});
+    }
+
+    jwToken.verify(token, function (err, decoded) {
+      if (err) return res.json(401, {err: 'Invalid Token!'});
+      req.user = decoded; // This is the decrypted token or the payload you provided
+      next();
+    });
+  };
+  ```
+  Notice how we can either add a header as `Authorization: Bearer [token]` or we can add a parameter called `token` with the token
+
+2. Now let's go back to `config/policies.js` and modify the first policy:
+  ```
+  '*': ['isAuthorized'],
+  ```
+  This will make sure that all routes and controllers pass through the `isAuthorized` policy before continuing. The auth actions should not pass through this policy but instead through the `passport` policy in order to create and login a user based on credentials. For this reason we have already set the following in this same file
+  ```
+  'auth': {
+      '*': ['passport']
+    }
+  ```
+3. To test our new policy lets create a new controller called `TestController.js` under `api/TestController.js` with the following code
+  ```
+   module.exports = {
+     getUser: function (req, res) {
+       return res.json(req.user);
+     }
+   };
+
+  ```
+  This will return the decoded token. You may wonder how `req.user` seems to "magically" have the decoded token. Well if you notice in `isAuthorized.js` policy, once a token is verified and decoded, it is stored into `req.user` for us to use in any controller.
+
+  - To test in Postman, first login with credentials of a user
+  ```
+  identifier: somebody
+  password: password
+  ```
+  - This will return a token that we will copy
+  - Then we will do a get request to `http://localhost:1337/test/getUser` with an Authorization Header:
+  ```
+  Authorization: Bear [token]
+  Example:
+  Authorization: Bear eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7InVzZXJuYW1lIjoic29tZWJvZHkiLCJlbWFpbCI6ImFzZGZhc0BnYW1zZGYuY29tIiwiY3JlYXRlZEF0IjoiMjAxNi0xMi0xOVQwODoxMDo0OS4wMzNaIiwidXBkYXRlZEF0IjoiMjAxNi0xMi0xOVQwODoxMDo0OS4wMzNaIiwiaWQiOiI1ODU3OTYwOWNlY2YzZjQ3NTMzMjJiYWMifSwiaWF0IjoxNDgyMTM1MDQ5LCJleHAiOjE0ODIxMzUyMjl9.LZRd8rnoMsaIUpgFia78uF1ZwWbXJBjJhyi_D2inxyE
+  ```
+  You should receive the following json response:
+  ```
+  {
+    "user": {
+      "username": "somebody",
+      "email": "somebody@gmail.com",
+      "createdAt": "2016-12-19T08:10:49.033Z",
+      "updatedAt": "2016-12-19T08:10:49.033Z",
+      "id": "58579609cecf3f4753322bac"
+    },
+    "iat": 1482135049,
+    "exp": 1482135229
+  }
+  ```
+  Remember that if you restart the server then you must re-login and receive a new token.
+
+## 6. Customizing Policies
+Now we have set up registration, login, and we have required JWT authentication for all routes except for auth routes. Let look into other possiblilities.
+### Allow access to a specific controller without Authentication
+1. Let's start by creating a new action in our test controller called `unauthenticated`
+  ```
+  unAuthenticated: function (req, res) {
+      return res.send("This controller action does not require authentication")
+   }
+  ```
+2. Then let's allow access to this action. Add the following policy to `config/policy.js`
+  ```
+  'TestController': {
+      'unauthenticated': true
+    }
+  ```
+3. Test this controller with out adding the `Authentication` header. 
+
+NOTE: We have not added any routes pointing to our TestController Actions. In SailsJs, action are auto-routed using the Blueprint API which come built into Sails. For development this feature is great for quickly testing functions but for production we would want to disable this and manually control how actions are routed.
