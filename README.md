@@ -1,6 +1,6 @@
 # Sails-API with Passport and JWT Authentication
 
-This API has been set up for the purpose of demonstrating how to set up a simple API with Authentication. For the purpose of this API, it will be assumed that there is no front end application directly attached to this Repository. Instead all API requests will be done from other applications using JWT for authentication.
+This tutorial has been set up for the purpose of demonstrating how to set up a simple API with Authentication. For the purpose of this tutorial, it will be assumed that there is no front end application directly attached to this Repository. Instead all API requests will be done from other applications using JWT for authentication.
 
 After creating various API's for various applications, each time I have been forced to apply authentication a little differently with different work arounds. Slowly I began to figure out a more standard way of applying Authentication using the power of SailsJs. In this tutorial we will start completely from scratch allowing us to create a strong and clean baseline for any API requiring Authentication.
 
